@@ -1,3 +1,10 @@
+.. only:: html
+
+   .. nbinfo::
+
+      Download a PDF version of the documentation: :pdf:`pyhdfe.pdf <>`
+
+
 pyhdfe
 ======
 
