@@ -21,7 +21,7 @@ setup(
     install_requires=read('requirements.txt').splitlines(),
     extras_require={
         'tests': ['pytest', 'pytest-xdist'],
-        'docs': ['pywin32!=226', 'sphinx', 'ipython', 'astunparse', 'sphinx-rtd-theme', 'nbsphinx', 'jupyter_client'],
+        'docs': ['sphinx', 'ipython', 'astunparse', 'sphinx-rtd-theme', 'nbsphinx', 'jupyter_client'],
     },
     include_package_data=True,
     description="High dimensional fixed effect absorption with Python 3",
