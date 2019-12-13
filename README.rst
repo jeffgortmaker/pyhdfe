@@ -1,4 +1,4 @@
-pyhdfe
+PyHDFE
 ======
 
 |docs-badge|_ |pypi-badge|_ |python-badge|_ |license-badge|_
@@ -21,9 +21,9 @@ An overview of the package, examples, and other documentation can be found on `R
 
 .. docs-start
 
-The pyhdfe package is a Python 3 implementation of algorithms for absorbing high dimensional fixed effects. This package was created by `Jeff Gortmaker <https://jeffgortmaker.com>`_ in collaboration with Anya Tarascina.
+PyHDFE is a Python 3 implementation of algorithms for absorbing high dimensional fixed effects. This package was created by `Jeff Gortmaker <https://jeffgortmaker.com>`_ in collaboration with Anya Tarascina.
 
-What pyhdfe won't do is provide a convenient interface for running regressions. Instead, the package is meant to be incorporated into statistical projects that would benefit from performant fixed effect absorption. Another goal is facilitating fair comparison of algorithms that have been previously implemented in various languages with different convergence criteria.
+What PyHDFE won't do is provide a convenient interface for running regressions. Instead, the package is meant to be incorporated into statistical projects that would benefit from performant fixed effect absorption. Another goal is facilitating fair comparison of algorithms that have been previously implemented in various languages with different convergence criteria.
 
 Development of the package has been guided by code made publicly available by many researchers and practitioners. For a full list of papers and software cited in this documentation, refer to the `references <https://pyhdfe.readthedocs.io/en/stable/references.html>`_ section of the documentation.
 
@@ -31,9 +31,9 @@ Development of the package has been guided by code made publicly available by ma
 Installation
 ------------
 
-The pyhdfe package has been tested on `Python <https://www.python.org/downloads/>`_ versions 3.6 and 3.7. The `SciPy instructions <https://scipy.org/install.html>`_ for installing related packages is a good guide for how to install a scientific Python environment. A good choice is the `Anaconda Distribution <https://www.anaconda.com/distribution/>`_, since, along with many other packages that are useful for scientific computing, it comes packaged with pyhdfe's only required dependencies: `NumPy <https://numpy.org/>`_ and `SciPy <https://www.scipy.org/>`_.
+The PyHDFE package has been tested on `Python <https://www.python.org/downloads/>`_ versions 3.6 and 3.7. The `SciPy instructions <https://scipy.org/install.html>`_ for installing related packages is a good guide for how to install a scientific Python environment. A good choice is the `Anaconda Distribution <https://www.anaconda.com/distribution/>`_, since, along with many other packages that are useful for scientific computing, it comes packaged with PyHDFE's only required dependencies: `NumPy <https://numpy.org/>`_ and `SciPy <https://www.scipy.org/>`_.
 
-You can install the current release of pyhdfe with `pip <https://pip.pypa.io/en/latest/>`_::
+You can install the current release of PyHDFE with `pip <https://pip.pypa.io/en/latest/>`_::
 
     pip install pyhdfe
 
@@ -41,7 +41,7 @@ You can upgrade to a newer release with the ``--upgrade`` flag::
 
     pip install --upgrade pyhdfe
 
-If you lack permissions, you can install pyhdfe in your user directory with the ``--user`` flag::
+If you lack permissions, you can install PyHDFE in your user directory with the ``--user`` flag::
 
     pip install --user pyhdfe
 

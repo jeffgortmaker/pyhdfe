@@ -5,4 +5,4 @@ Please use the `GitHub issue tracker <https://github.com/jeffgortmaker/pyhdfe/is
 
 - Code optimizations.
 - Documentation improvements.
-- Alternate algorithms that have been implemented in the literature but not in pyhdfe.
+- Alternate algorithms that have been implemented in the literature but not in PyHDFE.
