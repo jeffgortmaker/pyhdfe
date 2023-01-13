@@ -22,8 +22,8 @@ setup(
     extras_require={
         'tests': ['pytest', 'pytest-xdist'],
         'docs': [
-            'sphinx==2.0.0', 'ipython', 'astunparse', 'sphinx-rtd-theme==0.4.3', 
-            'nbsphinx==0.5.0', 'jinja2~=2.11', 'docutils==0.17',
+            'sphinx==2.0.0', 'ipython', 'astunparse', 'sphinx-rtd-theme==0.4.3', 'nbsphinx==0.5.0', 'jinja2~=2.11',
+            'docutils==0.17',
         ],
     },
     include_package_data=True,
@@ -42,11 +42,13 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
-        "Topic :: Scientific/Engineering"
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Topic :: Scientific/Engineering",
     ],
     url="https://github.com/jeffgortmaker/pyhdfe",
     project_urls={
         "Documentation": "http://pyhdfe.readthedocs.io/en/latest",
-        "Tracker": "https://github.com/jeffgortmaker/pyhdfe/issues"
-    }
+        "Tracker": "https://github.com/jeffgortmaker/pyhdfe/issues",
+    },
 )

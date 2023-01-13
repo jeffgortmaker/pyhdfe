@@ -1,13 +1,16 @@
 PyHDFE
 ======
 
-|docs-badge|_ |pypi-badge|_ |python-badge|_ |license-badge|_
+|docs-badge|_ |pypi-badge|_ |downloads-badge|_ |python-badge|_ |license-badge|_
 
 .. |docs-badge| image:: https://img.shields.io/readthedocs/pyhdfe/stable.svg
 .. _docs-badge: https://pyhdfe.readthedocs.io/en/stable/
 
 .. |pypi-badge| image:: https://img.shields.io/pypi/v/pyhdfe.svg
 .. _pypi-badge: https://pypi.org/project/pyhdfe/
+
+.. |downloads-badge| image:: https://img.shields.io/pypi/dm/pyhdfe.svg
+.. _downloads-badge: https://pypistats.org/packages/pyhdfe
 
 .. |python-badge| image:: https://img.shields.io/pypi/pyversions/pyhdfe.svg
 .. _python-badge: https://pypi.org/project/pyhdfe/
@@ -31,7 +34,7 @@ Development of the package has been guided by code made publicly available by ma
 Installation
 ------------
 
-The PyHDFE package has been tested on `Python <https://www.python.org/downloads/>`_ versions 3.6 and 3.7. The `SciPy instructions <https://scipy.org/install.html>`_ for installing related packages is a good guide for how to install a scientific Python environment. A good choice is the `Anaconda Distribution <https://www.anaconda.com/distribution/>`_, since, along with many other packages that are useful for scientific computing, it comes packaged with PyHDFE's only required dependencies: `NumPy <https://numpy.org/>`_ and `SciPy <https://www.scipy.org/>`_.
+The PyHDFE package has been tested on `Python <https://www.python.org/downloads/>`_ versions 3.6 through 3.9. The `SciPy instructions <https://scipy.org/install/>`_ for installing related packages is a good guide for how to install a scientific Python environment. A good choice is the `Anaconda Distribution <https://www.anaconda.com/products/distribution>`_, since, along with many other packages that are useful for scientific computing, it comes packaged with PyHDFE's only required dependencies: `NumPy <https://numpy.org/>`_ and `SciPy <https://scipy.org/>`_.
 
 You can install the current release of PyHDFE with `pip <https://pip.pypa.io/en/latest/>`_::
 
