@@ -381,7 +381,7 @@ class MAP(FixedPoint):
         u = residual.copy()
 
         # identify vectors that can be accelerated
-        last_apply = np.ones(ssr.size, np.bool)
+        last_apply = np.ones(ssr.size, bool)
         apply = ssr.flatten() >= self._acceleration_tol
 
         # iterate until termination
@@ -531,7 +531,7 @@ class LSMR(FixedPoint):
         # iterate until each vector converges
         iterations = 0
         matrix = matrix.copy()
-        converged = np.zeros(j, np.bool)
+        converged = np.zeros(j, bool)
         while True:
             last_matrix = None if self._converged is None else matrix.copy()
             for i, vector in enumerate(matrix_transpose):
