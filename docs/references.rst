@@ -47,7 +47,7 @@ Gaure, Simen (2013b). `lfe: Linear group fixed effects <https://journal.r-projec
 
 Gearhart and Koshy (1989)
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-Gearhart, William B., and Mathew Koshy (1989). `Acceleration schemes for the method of alternating projections <https://www.sciencedirect.com/science/article/pii/0377042789902963>`_. *Journal of Computational and Applied Mathematics, 26* (3), 235-249.
+Gearhart, William B., and Mathew Koshy (1989). `Acceleration schemes for the method of alternating projections <https://doi.org/10.1016/0377-0427(89)90296-3>`_. *Journal of Computational and Applied Mathematics, 26* (3), 235-249.
 
 
 Guimarães and Portugal (2010)
@@ -98,4 +98,4 @@ reghdfe
 res2fe
 ~~~~~~
 
-`res2fe <https://soma.people.stanford.edu/research>`_. Matlab, SAS, and Stata. Paulo Somaini and Frank Wolak. Implements :ref:`references:Somaini and Wolak (2016)`.
+`res2fe <https://ideas.repec.org/a/bpj/jecome/v5y2016i1p143-152n4.html>`_. Matlab, SAS, and Stata. Paulo Somaini and Frank Wolak. Implements :ref:`references:Somaini and Wolak (2016)`.
