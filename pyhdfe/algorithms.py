@@ -472,7 +472,7 @@ class LSMR(FixedPoint):
         )
 
     @staticmethod
-    def _orthogonal_transformation(a: float, b: float) -> Tuple[float, float, float]:
+    def _orthogonal_transformation(a: Array, b: Array) -> Tuple[Array, Array, Array]:
         """Construct Given's plane rotation."""
         c, s = scipy.linalg.blas.drotg(a, b)
         r = b / s if abs(b) > abs(a) else a / c

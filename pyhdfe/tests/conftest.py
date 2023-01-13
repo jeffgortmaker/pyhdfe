@@ -18,7 +18,7 @@ Problem = Tuple[int, int, Array, Array, Array, Array]
 @pytest.fixture(scope='session', autouse=True)
 def configure() -> Iterator[None]:
     """Configure NumPy so that it raises all warnings as exceptions."""
-    with np.errstate(all='raise'):
+    with np.errstate(all='raise'):  # type: ignore
         yield
 
 
