@@ -29,7 +29,7 @@ class Groups(object):
         sorted_ids = flat[self.sort_indices]
 
         # identify groups
-        changes = np.ones(sorted_ids.shape, np.bool)
+        changes = np.ones(sorted_ids.shape, bool)
         changes[1:] = sorted_ids[1:] != sorted_ids[:-1]
         self.reduce_indices = np.nonzero(changes)[0]
 
