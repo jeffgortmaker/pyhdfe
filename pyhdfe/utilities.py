@@ -93,12 +93,11 @@ class Groups(object):
         """Compute the mean of each group."""
         if weights is None:
             return self.sum(matrix) / self.counts[:, None]
-        else:
-            if not hasattr(self, "wcounts"):
-                # note: for np.bincount to work, self.codes need to be a sequence of
-                # integers from 0 to max(self.codes), without 'holes'
-                self.wcounts = np.bincount(self.codes, weights.flatten())
-            return self.sum( matrix * weights) / self.wcounts[:, None]
+        if not hasattr(self, "wcounts"):
+            # note: for np.bincount to work, self.codes need to be a sequence of
+            # integers from 0 to max(self.codes), without 'holes'
+            self.wcounts = np.bincount(self.codes, weights.flatten())
+        return self.sum( matrix * weights) / self.wcounts[:, None]
 
     def expand(self, statistics: Array) -> Array:
         """Expand statistics for each group to the size of the original matrix."""
