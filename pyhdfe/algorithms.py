@@ -148,6 +148,11 @@ class Algorithm(abc.ABC):
         matrix : `array-like`
             The two-dimensional array to residualize, which should have a number of rows equal to
             :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`).
+        weights: `array-like`.
+            Two-dimensional array with weights, which should have number of rows equal to
+            :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`)
+            and one column. Optional argument, `None` by default. If provided, `matrix` is residualized by
+            substracting weighted means.
 
         Returns
         -------
