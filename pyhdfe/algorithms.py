@@ -3,7 +3,7 @@
 import abc
 import itertools
 import functools
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 import scipy.linalg
@@ -190,7 +190,7 @@ class Algorithm(abc.ABC):
         return self._residualize_matrix(matrix, weights)
 
     @abc.abstractmethod
-    def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Residualize a matrix. If weights are provided, residualize by the *weighted* mean."""
 
 
@@ -206,7 +206,7 @@ class Dummy(Algorithm):
         super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
         self._D = np.hstack([g.dense_dummies(drop_last=i > 0) for i, g in enumerate(self._groups_list)])
 
-    def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Compute residuals from regressions of each matrix column on the dummy variables.
            Weights are currently not supported.
         """
@@ -219,7 +219,7 @@ class Within(Algorithm):
 
     _ub = 1
 
-    def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """De-mean a matrix within groups. If weights are provided, substract a weighted mean
            (instead of an unweighted mean).
         """
@@ -264,7 +264,7 @@ class SW(Algorithm):
         # compute the remaining component
         self._B = -self._DD_inv @ self._DH @ self._C
 
-    def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Complete the algorithm. Weights are currently not supported."""
 
         if weights is not None:
@@ -347,7 +347,7 @@ class MAP(FixedPoint):
         self._acceleration = acceleration
         self._acceleration_tol = acceleration_tol
 
-    def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Residualize a matrix with fixed point iteration. If weights are provided,
            residualize by a *weighted* mean.
         """
@@ -358,7 +358,7 @@ class MAP(FixedPoint):
         }
         return accelerations[self._acceleration](matrix, weights)
 
-    def _iterate(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _iterate(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Iteratively transform a matrix without acceleration."""
         iterations = 0
         while True:
@@ -372,7 +372,7 @@ class MAP(FixedPoint):
 
         return matrix
 
-    def _apply_gk(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _apply_gk(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Accelerate iteration with the Gearhart-Koshy method. For each vector, acceleration is only used when the sum
         of squared residuals relative to the sum of squared vector values is greater than the acceleration tolerance and
         when the t value is greater than its expected upper bound of 0.5.
@@ -399,7 +399,7 @@ class MAP(FixedPoint):
 
         return matrix
 
-    def _apply_cg(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _apply_cg(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Accelerate iteration with the conjugate gradient method. For each vector, acceleration is used until the
         first time that the sum of squared residuals is less than the acceleration tolerance.
         """
@@ -454,7 +454,7 @@ class MAP(FixedPoint):
 
         return matrix
 
-    def _transform_matrix(self, matrix: Array, weights: Union[Array, None], cimmino_difference: bool = False) -> Array:
+    def _transform_matrix(self, matrix: Array, weights: Optional[Array] = None, cimmino_difference: bool = False) -> Array:
         """Transform a matrix according to using the specified method. Optionally compute the difference compared to the
         original matrix for the Cimmino transform (this isn't possible for the others).
         """
@@ -508,7 +508,7 @@ class LSMR(FixedPoint):
         r = b / s if abs(b) > abs(a) else a / c
         return c, s, r
 
-    def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Compute fitted values for each column with LSMR and form residuals.
            Weights are currently not supported.
         """
