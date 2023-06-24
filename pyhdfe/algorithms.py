@@ -186,7 +186,7 @@ class Algorithm(abc.ABC):
 
     @abc.abstractmethod
     def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
-        """Residualize a matrix."""
+        """Residualize a matrix. If weights are provided, residualize by the *weighted* mean."""
 
 
 class Dummy(Algorithm):
@@ -202,7 +202,9 @@ class Dummy(Algorithm):
         self._D = np.hstack([g.dense_dummies(drop_last=i > 0) for i, g in enumerate(self._groups_list)])
 
     def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
-        """Compute residuals from regressions of each matrix column on the dummy variables."""
+        """Compute residuals from regressions of each matrix column on the dummy variables.
+           Weights are currently not supported.
+        """
         if weights is not None:
             raise ValueError("weights are not supported for the Dummy algorithm.")
         return matrix - self._D @ scipy.linalg.inv(self._D.T @ self._D) @ self._D.T @ matrix
@@ -213,7 +215,9 @@ class Within(Algorithm):
     _ub = 1
 
     def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
-        """De-mean a matrix within groups."""
+        """De-mean a matrix within groups. If weights are provided, substract a weighted mean
+           (instead of an unweighted mean).
+        """
         assert len(self._groups_list) == 1
         groups = self._groups_list[0]
         return matrix - groups.expand(groups.mean(matrix, weights))
@@ -256,7 +260,7 @@ class SW(Algorithm):
         self._B = -self._DD_inv @ self._DH @ self._C
 
     def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
-        """Complete the algorithm."""
+        """Complete the algorithm. Weights are currently not supported."""
 
         if weights is not None:
             raise ValueError("weights are not supported for the SW algorithm.")
@@ -339,7 +343,9 @@ class MAP(FixedPoint):
         self._acceleration_tol = acceleration_tol
 
     def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
-        """Residualize a matrix with fixed point iteration."""
+        """Residualize a matrix with fixed point iteration. If weights are provided,
+           residualize by a *weighted* mean.
+        """
         accelerations = {
             'none': self._iterate,
             'gk': self._apply_gk,
@@ -498,7 +504,9 @@ class LSMR(FixedPoint):
         return c, s, r
 
     def _residualize_matrix(self, matrix: Array, weights: Union[Array, None]) -> Array:
-        """Compute fitted values for each column with LSMR and form residuals."""
+        """Compute fitted values for each column with LSMR and form residuals.
+           Weights are currently not supported.
+        """
 
         if weights is not None:
             raise ValueError("weights are not supported for the LSMR algorithm.")
