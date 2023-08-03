@@ -212,7 +212,8 @@ class Dummy(Algorithm):
     def _residualize_matrix(self, matrix: Array) -> Array:
         """Compute residuals from regressions of each matrix column on the dummy variables.
         """
-        return matrix - self._D @ scipy.linalg.inv(self._D.T @ self._D) @ self._D.T @ matrix
+        WD = np.sqrt(self.weights) * self._D.T
+        return matrix - WD @ scipy.linalg.inv(WD.T @ WD) @ WD.T @ matrix
 
 class Within(Algorithm):
     """One-dimensional fixed effect absorption with the within transformation."""
