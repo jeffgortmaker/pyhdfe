@@ -189,7 +189,7 @@ def create(
     if residualize_method not in methods:
         raise ValueError(f"residualize_method must be None or one of {sorted(methods)}.")
 
-    if residualize_method not in ['map', 'within'] and weights is not None:
+    if residualize_method not in ['map', 'dummy', 'within'] and weights is not None:
         raise NotImplementedError(f"residualize_method '{residualize_method}' does not support weights.")
 
     # validate options
