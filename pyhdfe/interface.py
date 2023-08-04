@@ -189,8 +189,14 @@ def create(
     if residualize_method not in methods:
         raise ValueError(f"residualize_method must be None or one of {sorted(methods)}.")
 
-    if residualize_method not in ['map', 'dummy', 'within'] and weights is not None:
-        raise NotImplementedError(f"residualize_method '{residualize_method}' does not support weights.")
+    if weights is not None:
+        if residualize_method not in ['map', 'dummy', 'within']:
+            raise NotImplementedError(f"residualize_method '{residualize_method}' does not support weights.")
+        #if residualize_method == "map":
+        #    if options is not None:
+        #        if options.get("transform") not in [None, "kaczmarz"]:
+        #            raise NotImplementedError(f"residualize_method '{residualize_method}' does not support weights with transform '{updated_options.get('transform')}'.")
+
 
     # validate options
     default_fixed_point_options = {

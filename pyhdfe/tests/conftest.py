@@ -101,11 +101,13 @@ def problem(request: Any) -> Problem:
 
     # run a regression
     y1, X1 = np.split(algorithm.residualize(np.c_[y, X]), [1], axis=1)
-    if weights is None:
+    if w is None:
         beta = scipy.linalg.inv(X1.T @ X1) @ X1.T @ y1
     else:
-        y1w = np.sqrt(w) * y1
-        X1w = np.sqrt(w) * X1
+        if algorithm._singleton_indices is not None:
+            w2 = w[~algorithm._singleton_indices]
+        y1w = np.sqrt(w2) * y1
+        X1w = np.sqrt(w2) * X1
         beta = scipy.linalg.inv(X1w.T @ X1w) @ X1w.T @ y1w
 
 
