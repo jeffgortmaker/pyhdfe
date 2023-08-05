@@ -93,13 +93,13 @@ class Algorithm(abc.ABC):
         if weights is not None:
             weights = np.atleast_2d(weights)
             if len(weights.shape) != 2:
-                raise ValueError("weights should be a two-dimensional array.")
+                raise ValueError("`weights` should be a two-dimensional array.")
             if weights.shape[0] != self.observations:
-                raise ValueError("weights should have the same number of rows as fixed effect IDs.")
+                raise ValueError("`weights` should have the same number of rows as fixed effect IDs.")
             if self._singleton_indices is not None:
                 weights = weights[~self._singleton_indices]
-            if (weights < 0).any():
-                raise ValueError("weights should be non-negative.")
+            if (weights <= 0).any():
+                raise ValueError("`weights` should strictly positive.")
             # compute weighted counts
             [g.compute_weighted_counts(weights) for g in self._groups_list]
 
