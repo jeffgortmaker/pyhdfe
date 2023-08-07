@@ -98,8 +98,6 @@ class Algorithm(abc.ABC):
                 raise ValueError("`weights` should have the same number of rows as fixed effect IDs.")
             if self._singleton_indices is not None:
                 weights = weights[~self._singleton_indices]
-            if (weights <= 0).any():
-                raise ValueError("`weights` should strictly positive.")
             # compute weighted counts
             [g.compute_weighted_counts(weights) for g in self._groups_list]
 
