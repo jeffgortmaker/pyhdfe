@@ -96,11 +96,11 @@ def problem(request: Any) -> Problem:
 
 
     # count degrees of freedom
-    algorithm = create(ids, w, degrees_method='exact')
+    algorithm = create(ids, degrees_method='exact')
     assert algorithm.degrees is not None
 
     # run a regression
-    y1, X1 = np.split(algorithm.residualize(np.c_[y, X]), [1], axis=1)
+    y1, X1 = np.split(algorithm.residualize(np.c_[y, X], w), [1], axis=1)
     if w is None:
         beta = scipy.linalg.inv(X1.T @ X1) @ X1.T @ y1
     else:

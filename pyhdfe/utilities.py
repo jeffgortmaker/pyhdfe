@@ -19,9 +19,6 @@ class Groups(object):
     counts: Array
     group_count: int
     total_count: int
-    weighted_counts: Optional[Array]
-    weights: Optional[Array]
-
 
     def __init__(self, ids_column: Array) -> None:
         """Sort and index IDs that define groups."""
@@ -44,13 +41,6 @@ class Groups(object):
         self.total_count = self.codes.size
         self.group_count = self.reduce_indices.size
         self.counts = np.diff(np.append(self.reduce_indices, self.total_count))
-        self.weighted_counts = None
-        self.weights = None
-
-    def compute_weighted_counts(self, weights: Array) -> None:
-        """Compute weighted counts."""
-        self.weighted_counts = self.sum(weights)
-        self.weights = weights
 
     def within(self, other: 'Groups') -> bool:
         """Check if these groups are nested within another set of groups."""
@@ -99,11 +89,11 @@ class Groups(object):
         """Compute the sum of each group."""
         return np.add.reduceat(matrix[self.sort_indices], self.reduce_indices)
 
-    def mean(self, matrix: Array) -> Array:
-        """Compute the (weighted) mean of each group."""
-        if self.weights is not None:
-            return self.sum(matrix * self.weights) / self.weighted_counts #[:, None]
-        return self.sum(matrix) / self.counts[:, None]
+    def mean(self, matrix: Array, weights: Optional[Array] = None) -> Array:
+        """Compute the mean of each group."""
+        if weights is None:
+            return self.sum(matrix) / self.counts[:, None]
+        return self.sum( matrix * weights) / self.sum(weights)
 
     def expand(self, statistics: Array) -> Array:
         """Expand statistics for each group to the size of the original matrix."""

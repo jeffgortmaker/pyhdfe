@@ -7,7 +7,7 @@ from .utilities import Array
 
 
 def create(
-        ids: Array, weights: Optional[Array] = None, cluster_ids: Optional[Array] = None, drop_singletons: bool = True, compute_degrees: bool = True,
+        ids: Array, cluster_ids: Optional[Array] = None, drop_singletons: bool = True, compute_degrees: bool = True,
         degrees_method: Optional[str] = None, residualize_method: Optional[str] = None,
         options: Optional[dict] = None) -> Algorithm:
     r"""Initialize an algorithm for absorbing fixed effects.
@@ -31,9 +31,6 @@ def create(
         Two-dimensional array of fixed effect identifiers. Columns are fixed effect dimensions and rows are
         observations. Identifiers can be integers, strings, or other hashable data types. Columns after the first should
         have more than one unique value.
-    weights: `array-like, optional`
-        Two-dimensional array of weights. Weights should be non-negative, have the number of rows as ``ids``, and one column.
-        By default, all observations are weighted equally.
     cluster_ids : `array-like, optional`
         Two-dimensional array of cluster group identifiers, which if specified will be used when computing degrees of
         freedom. If a fixed effect (i.e., a column in ``ids``) is nested within a cluster (i.e., a column of this
@@ -189,16 +186,6 @@ def create(
     if residualize_method not in methods:
         raise ValueError(f"residualize_method must be None or one of {sorted(methods)}.")
 
-    if weights is not None:
-        if residualize_method not in ['map', 'dummy', 'within']:
-            raise NotImplementedError(f"residualize_method '{residualize_method}' does not support weights.")
-        if residualize_method == "map":
-            if options is not None:
-                acceleration = options.get("acceleration")
-                if acceleration in ["cg", "gk"]:
-                    raise NotImplementedError(f"residualize_method '{residualize_method}' does not support weights with acceleration '{acceleration}' .")
-
-
     # validate options
     default_fixed_point_options = {
         'iteration_limit': 1000000,
@@ -230,4 +217,4 @@ def create(
     # set defaults and initialize the algorithm
     updated_options.update(options)
     algorithm = methods[residualize_method]
-    return algorithm(ids, weights, cluster_ids, drop_singletons, compute_degrees, degrees_method, **updated_options)
+    return algorithm(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, **updated_options)

@@ -37,15 +37,19 @@ def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method:
     """Test that algorithms give correct estimates."""
     _, _, y, X, ids, beta, weights = problem
     try:
-        algorithm = create(ids, weights, drop_singletons=drop_singletons, residualize_method=residualize_method, options=options)
+        algorithm = create(ids, drop_singletons=drop_singletons, residualize_method=residualize_method, options=options)
     except ValueError as exception:
         if "fixed effects supported" in str(exception):
             return pytest.skip(f"This algorithm does not support {ids.shape[1]}-dimensional fixed effects.")
         raise
+    try:
+        y1, X1 = np.split(algorithm.residualize(np.c_[y, X], weights), [1], axis=1)
     except NotImplementedError as exception:
-        if "does not support weights" in str(exception):
-            return pytest.skip("This algorithm does not support weights.")
-    y1, X1 = np.split(algorithm.residualize(np.c_[y, X]), [1], axis=1)
+        if "weights are not supported" in str(exception):
+            if residualize_method == "map":
+                return pytest.skip(f"Weights are not supported for algorithms {residualize_method} and acceleration {options['acceleration']}.")
+            return pytest.skip(f"Weights are not supported for algorithms {residualize_method}.")
+        raise
     if weights is not None:
         if drop_singletons:
             if algorithm._singleton_indices is not None:
