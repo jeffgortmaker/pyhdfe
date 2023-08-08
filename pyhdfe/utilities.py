@@ -93,7 +93,7 @@ class Groups(object):
         """Compute the mean of each group."""
         if weights is None:
             return self.sum(matrix) / self.counts[:, None]
-        return self.sum( matrix * weights) / self.sum(weights)
+        return self.sum(matrix * weights) / self.sum(weights)
 
     def expand(self, statistics: Array) -> Array:
         """Expand statistics for each group to the size of the original matrix."""

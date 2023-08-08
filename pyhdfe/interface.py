@@ -9,7 +9,7 @@ from .utilities import Array
 def create(
         ids: Array, cluster_ids: Optional[Array] = None, drop_singletons: bool = True, compute_degrees: bool = True,
         degrees_method: Optional[str] = None, residualize_method: Optional[str] = None,
-        options: Optional[dict] = None) -> Algorithm:
+        standardize_weights:Optional[bool] = False, options: Optional[dict] = None) -> Algorithm:
     r"""Initialize an algorithm for absorbing fixed effects.
 
     By default, simple de-meaning is used for a single fixed effect, and non-accelerated de-meaning is used for more
@@ -69,6 +69,9 @@ def create(
             - ``'exact'`` - Apply :func:`numpy.linalg.matrix_rank` to dummy variables constructed from ``ids``. This
               method is exact for any number of dimensions but is typically computationally infeasible. It is meant to
               be a benchmark.
+    standardize_weights: `bool, optional`
+        Whether to standardize weights provided to the `residualize` method to sum to one. False by default. Not
+        relevant if no weights are provided.
 
     residualize_method : `str, optional`
         Type of algorithm to initialize. The following methods are supported:
@@ -217,4 +220,4 @@ def create(
     # set defaults and initialize the algorithm
     updated_options.update(options)
     algorithm = methods[residualize_method]
-    return algorithm(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, **updated_options)
+    return algorithm(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights, **updated_options)

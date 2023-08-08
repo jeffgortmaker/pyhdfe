@@ -44,6 +44,7 @@ def get_parameters() -> Iterator[Any]:
                     f"weights: {weights}"
                 ]))
 
+
 def simulate_data(
         covariates: int, scales: Sequence[int], levels: Sequence[int], singletons: float,
         state: np.random.RandomState, weights: Union[bool, str]) -> Tuple[Array, Array, Array, Array]:
@@ -75,7 +76,7 @@ def simulate_data(
     X = state.normal(size=(N, covariates))
     y = X.sum(axis=1, keepdims=True) + fe.sum(axis=1, keepdims=True) + error
 
-    if weights == True:
+    if weights:
         weights = state.uniform(size=(N, 1))
     elif weights == "ones":
         weights = np.ones((N, 1))
@@ -94,7 +95,6 @@ def problem(request: Any) -> Problem:
     state = np.random.RandomState(hash(tuple(request.param)) % 2**32)
     ids, X, y, w = simulate_data(covariates, scales, levels, singletons, state, weights)
 
-
     # count degrees of freedom
     algorithm = create(ids, degrees_method='exact')
     assert algorithm.degrees is not None
@@ -109,6 +109,5 @@ def problem(request: Any) -> Problem:
         y1w = np.sqrt(w2) * y1
         X1w = np.sqrt(w2) * X1
         beta = scipy.linalg.inv(X1w.T @ X1w) @ X1w.T @ y1w
-
 
     return algorithm.observations, algorithm.degrees, y, X, ids, beta[:X.shape[1]], w

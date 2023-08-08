@@ -52,7 +52,7 @@ class Algorithm(abc.ABC):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str]) -> None:
+            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
         """Validate IDs, optionally drop singletons, initialize group information, and compute counts."""
 
         # validate fixed effect IDs
@@ -87,6 +87,9 @@ class Algorithm(abc.ABC):
             self.degrees, self.singletons = self._compute_degrees(cluster_ids, degrees_method)
 
         self._supports_weights = False
+        self._standardize_weights = False
+        if standardize_weights:
+            self._standardize_weights = True
 
     def _compute_degrees(self, cluster_ids: Optional[Array], degrees_method: Optional[str]) -> Tuple[int, int]:
         """Exactly compute or approximate the degrees of freedom used by the fixed effects. As a by-product, count the
@@ -143,18 +146,23 @@ class Algorithm(abc.ABC):
         .. warning::
 
            This function assumes that all of your data have already been cleaned. For example, it will not drop
-           observations with null values.
+           observations with null values. It will also not do any checks on provided weights, i.e. if they are
+           all larger than 0.
 
         Parameters
         ----------
         matrix : `array-like`
             The two-dimensional array to residualize, which should have a number of rows equal to
             :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`).
+        weights: `array-like, optional`
+            Two-dimensional array with weights, which should have a number of rows equal to
+            :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`),
+            and one column.
 
         Returns
         -------
         `ndarray`
-            Residuals from a regression of each column of ``matrix`` on the fixed effects. This matrix has the same
+            Residuals from a (weighted) regression of each column of ``matrix`` on the fixed effects. This matrix has the same
             number of columns as ``matrix``. If any singleton observations were dropped when initializing the
             :class:`Algorithm` (this is the default behavior of :func:`create`), the residualized matrix will have
             correspondingly fewer rows.
@@ -175,7 +183,8 @@ class Algorithm(abc.ABC):
         if weights is not None:
 
             if not self._supports_weights:
-                raise NotImplementedError("weights are not supported for algorithms of type `lsmr` and `sw`. For `map`, only `acceleration = 'none'` is supported.")
+                raise NotImplementedError(
+                    "weights are not supported for algorithms of type `lsmr` and `sw`. For `map`, only `acceleration = 'none'` is supported.")
             weights = np.atleast_2d(weights)
             if len(weights.shape) != 2:
                 raise ValueError("weights should be a two-dimensional array.")
@@ -183,6 +192,8 @@ class Algorithm(abc.ABC):
                 raise ValueError("weights should have the same number of rows as fixed effect IDs.")
             if self._singleton_indices is not None:
                 weights = weights[~self._singleton_indices]
+            if self._standardize_weights:
+                weights /= np.sum(weights)
 
         return self._residualize_matrix(matrix, weights)
 
@@ -198,9 +209,9 @@ class Dummy(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str]) -> None:
+            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
         """Create dummy variables."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
         self._supports_weights = True
         self._D = np.hstack([g.dense_dummies(drop_last=i > 0) for i, g in enumerate(self._groups_list)])
 
@@ -211,6 +222,7 @@ class Dummy(Algorithm):
         WD = np.sqrt(weights) * self._D
         return matrix - WD @ scipy.linalg.inv(WD.T @ WD) @ WD.T @ matrix
 
+
 class Within(Algorithm):
     """One-dimensional fixed effect absorption with the within transformation."""
 
@@ -218,9 +230,9 @@ class Within(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str]) -> None:
+            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
         """Create dummy variables."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
         self._supports_weights = True
 
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
@@ -243,9 +255,9 @@ class SW(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str]) -> None:
+            degrees_method: Optional[str], standardize_weights: Optional[str]) -> None:
         """Construct algorithm components."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
 
         # construct sparse matrices
         assert len(self._groups_list) == 2
@@ -286,10 +298,10 @@ class FixedPoint(Algorithm, abc.ABC):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], iteration_limit: int, tol: float,
-            converged: Optional[Callable[[Array, Array], bool]]) -> None:
+            degrees_method: Optional[str], standardize_weights: Optional[bool],
+            iteration_limit: int, tol: float, converged: Optional[Callable[[Array, Array], bool]]) -> None:
         """Validate fixed point options."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
         if not isinstance(iteration_limit, int) or iteration_limit <= 0:
             raise ValueError("iteration_limit should be a positive integer.")
         if not isinstance(tol, (int, float)) or tol < 0:
@@ -323,12 +335,12 @@ class MAP(FixedPoint):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], iteration_limit: int, tol: float,
+            degrees_method: Optional[str], standardize_weights: Optional[bool], iteration_limit: int, tol: float,
             converged: Optional[Callable[[Array, Array], bool]], transform: str, acceleration: str,
             acceleration_tol: float) -> None:
         """Validate transform and acceleration options."""
         super().__init__(
-            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, iteration_limit, tol, converged
+            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights, iteration_limit, tol, converged
         )
         transforms = {'kaczmarz', 'symmetric', 'cimmino'}
         accelerations = {'none', 'gk', 'cg'}
@@ -482,11 +494,11 @@ class LSMR(FixedPoint):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], iteration_limit: int, tol: float,
+            degrees_method: Optional[str], standardize_weights: Optional[bool], iteration_limit: int, tol: float,
             converged: Optional[Callable[[Array, Array], bool]], residual_tol: float, condition_limit: float) -> None:
         """Validate tolerances and create a sparse matrix of dummy variables."""
         super().__init__(
-            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, iteration_limit, tol, converged
+            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights, iteration_limit, tol, converged
         )
         if not isinstance(residual_tol, (int, float)) or residual_tol < 0:
             raise ValueError("residual_tol should be a nonnegative float.")
