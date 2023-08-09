@@ -9,7 +9,7 @@ from .utilities import Array
 def create(
         ids: Array, cluster_ids: Optional[Array] = None, drop_singletons: bool = True, compute_degrees: bool = True,
         degrees_method: Optional[str] = None, residualize_method: Optional[str] = None,
-        standardize_weights:Optional[bool] = False, options: Optional[dict] = None) -> Algorithm:
+        standardize_weights: Optional[bool] = False, options: Optional[dict] = None) -> Algorithm:
     r"""Initialize an algorithm for absorbing fixed effects.
 
     By default, simple de-meaning is used for a single fixed effect, and non-accelerated de-meaning is used for more
@@ -220,4 +220,5 @@ def create(
     # set defaults and initialize the algorithm
     updated_options.update(options)
     algorithm = methods[residualize_method]
-    return algorithm(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights, **updated_options)
+    return algorithm(ids, cluster_ids, drop_singletons, compute_degrees,
+                     degrees_method, standardize_weights, **updated_options)

@@ -162,10 +162,10 @@ class Algorithm(abc.ABC):
         Returns
         -------
         `ndarray`
-            Residuals from a (weighted) regression of each column of ``matrix`` on the fixed effects. This matrix has the same
-            number of columns as ``matrix``. If any singleton observations were dropped when initializing the
-            :class:`Algorithm` (this is the default behavior of :func:`create`), the residualized matrix will have
-            correspondingly fewer rows.
+            Residuals from a (weighted) regression of each column of ``matrix`` on the fixed effects.
+            This matrix has the same number of columns as ``matrix``. If any singleton observations
+            were dropped when initializing the :class:`Algorithm` (this is the default behavior
+            of :func:`create`), the residualized matrix will have correspondingly fewer rows.
 
         Examples
         --------
@@ -184,7 +184,8 @@ class Algorithm(abc.ABC):
 
             if not self._supports_weights:
                 raise NotImplementedError(
-                    "weights are not supported for algorithms of type `lsmr` and `sw`. For `map`, only `acceleration = 'none'` is supported.")
+                    """weights are not supported for algorithms of type `lsmr` and `sw`.
+                    For `map`, only `acceleration = 'none'` is supported.""")
             weights = np.atleast_2d(weights)
             if len(weights.shape) != 2:
                 raise ValueError("weights should be a two-dimensional array.")
@@ -278,7 +279,7 @@ class SW(Algorithm):
         # compute the remaining component
         self._B = -self._DD_inv @ self._DH @ self._C
 
-    def _residualize_matrix(self, matrix: Array, weights = None) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights=None) -> Array:
         """Complete the algorithm."""
 
         matrix = scipy.sparse.csr_matrix(matrix)
@@ -340,7 +341,8 @@ class MAP(FixedPoint):
             acceleration_tol: float) -> None:
         """Validate transform and acceleration options."""
         super().__init__(
-            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights, iteration_limit, tol, converged
+            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method,
+            standardize_weights, iteration_limit, tol, converged
         )
         transforms = {'kaczmarz', 'symmetric', 'cimmino'}
         accelerations = {'none', 'gk', 'cg'}
@@ -498,7 +500,8 @@ class LSMR(FixedPoint):
             converged: Optional[Callable[[Array, Array], bool]], residual_tol: float, condition_limit: float) -> None:
         """Validate tolerances and create a sparse matrix of dummy variables."""
         super().__init__(
-            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights, iteration_limit, tol, converged
+            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method,
+            standardize_weights, iteration_limit, tol, converged
         )
         if not isinstance(residual_tol, (int, float)) or residual_tol < 0:
             raise ValueError("residual_tol should be a nonnegative float.")
@@ -519,7 +522,7 @@ class LSMR(FixedPoint):
         r = b / s if abs(b) > abs(a) else a / c
         return c, s, r
 
-    def _residualize_matrix(self, matrix: Array, weights = None) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights=None) -> Array:
         """Compute fitted values for each column with LSMR and form residuals."""
 
         # collect dimensions
