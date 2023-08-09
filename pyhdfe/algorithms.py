@@ -256,7 +256,7 @@ class SW(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[str]) -> None:
+            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
         """Construct algorithm components."""
         super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
 
