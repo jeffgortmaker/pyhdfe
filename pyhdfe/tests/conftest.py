@@ -46,8 +46,9 @@ def get_parameters() -> Iterator[Any]:
 
 
 def simulate_data(
-        covariates: int, scales: Sequence[int], levels: Sequence[int], singletons: float,
-        state: np.random.RandomState, weights: Union[Array, bool, str]) -> Tuple[Array, Array, Array, Union[Array, None]]:
+        covariates: int, scales: Sequence[int], levels: Sequence[int],
+        singletons: float, state: np.random.RandomState,
+        weights: Union[Array, bool, str]) -> Tuple[Array, Array, Array, Union[Array, None]]:
     """Simulate IDs and data matrices."""
 
     # simulate fixed effects
