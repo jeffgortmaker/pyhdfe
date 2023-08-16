@@ -1,6 +1,6 @@
 """General functionality."""
 
-from typing import Any, Sequence
+from typing import Any, Sequence, Optional
 
 import numpy as np
 import scipy.sparse
@@ -89,9 +89,11 @@ class Groups(object):
         """Compute the sum of each group."""
         return np.add.reduceat(matrix[self.sort_indices], self.reduce_indices)
 
-    def mean(self, matrix: Array) -> Array:
+    def mean(self, matrix: Array, weights: Optional[Array] = None) -> Array:
         """Compute the mean of each group."""
-        return self.sum(matrix) / self.counts[:, None]
+        if weights is None:
+            return self.sum(matrix) / self.counts[:, None]
+        return self.sum(matrix * weights) / self.sum(weights)
 
     def expand(self, statistics: Array) -> Array:
         """Expand statistics for each group to the size of the original matrix."""

@@ -33,16 +33,36 @@ from .conftest import Problem
     pytest.param('map', {'acceleration': 'gk', 'acceleration_tol': np.inf}, id="MAP-GK-simple"),
     pytest.param('map', {'transform': 'cimmino', 'acceleration': 'cg', 'acceleration_tol': np.inf}, id="MAP-CG-simple"),
 ])
-def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method: str, options: dict) -> None:
+@pytest.mark.parametrize('standardize_weights', [
+    pytest.param(True, id="standardize weights"),
+    pytest.param(False, id="raw weights")
+])
+def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method: str, options: dict,
+                    standardize_weights: bool) -> None:
     """Test that algorithms give correct estimates."""
-    _, _, y, X, ids, beta = problem
+    _, _, y, X, ids, beta, weights = problem
     try:
-        algorithm = create(ids, drop_singletons=drop_singletons, residualize_method=residualize_method, options=options)
+        algorithm = create(ids, drop_singletons=drop_singletons, residualize_method=residualize_method,
+                           options=options, standardize_weights=standardize_weights)
     except ValueError as exception:
         if "fixed effects supported" in str(exception):
             return pytest.skip(f"This algorithm does not support {ids.shape[1]}-dimensional fixed effects.")
         raise
-    y1, X1 = np.split(algorithm.residualize(np.c_[y, X]), [1], axis=1)
+    try:
+        y1, X1 = np.split(algorithm.residualize(np.c_[y, X], weights), [1], axis=1)
+    except NotImplementedError as exception:
+        if "weights are not supported" in str(exception):
+            if residualize_method == "map":
+                return pytest.skip(f"""Weights are not supported for algorithms {residualize_method}
+                                   and acceleration {options['acceleration']}.""")
+            return pytest.skip(f"Weights are not supported for algorithms {residualize_method}.")
+        raise
+    if weights is not None:
+        if drop_singletons:
+            if algorithm._singleton_indices is not None:
+                weights = weights[~algorithm._singleton_indices]
+        X1 = np.sqrt(weights) * X1
+        y1 = np.sqrt(weights) * y1
     beta1 = scipy.linalg.inv(X1.T @ X1) @ X1.T @ y1
     np.testing.assert_allclose(beta, beta1, atol=1e-12, rtol=1e-12, verbose=True)
 
@@ -55,7 +75,7 @@ def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method:
 ])
 def test_limits(problem: Problem, residualize_method: str, options: dict, error_text: str) -> None:
     """Test that iteration and condition number limits can be reached."""
-    _, _, y, X, ids, _ = problem
+    _, _, y, X, ids, _, _ = problem
     algorithm = create(ids, residualize_method=residualize_method, options=options)
     try:
         algorithm.residualize(np.c_[y, X])
@@ -76,7 +96,7 @@ def test_limits(problem: Problem, residualize_method: str, options: dict, error_
 ])
 def test_degrees(problem: Problem, drop_singletons: bool, degrees_method: str, equality_bound: int) -> None:
     """Test that degrees of freedom are well approximated."""
-    observations, degrees, _, _, ids, _ = problem
+    observations, degrees, _, _, ids, _, _ = problem
     algorithm = create(ids, drop_singletons=drop_singletons, degrees_method=degrees_method)
     np.testing.assert_array_equal(observations, algorithm.observations, verbose=True)
     if ids.shape[1] <= equality_bound:
@@ -93,6 +113,6 @@ def test_degrees(problem: Problem, drop_singletons: bool, degrees_method: str, e
 ])
 def test_clusters(problem: Problem, degrees_method: str) -> None:
     """Test that fixed effects nested within clusters do not contribute to degrees of freedom."""
-    _, _, _, _, ids, _ = problem
+    _, _, _, _, ids, _, _ = problem
     algorithm = create(ids, cluster_ids=ids, degrees_method=degrees_method)
     np.testing.assert_array_equal(algorithm.degrees, 0, verbose=True)
