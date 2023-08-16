@@ -30,6 +30,8 @@ class Algorithm(abc.ABC):
     singletons : `int or None`
         Number of singleton groups or observations. This will be ``None`` if there was no need to identify singletons
         (i.e., if ``drop_singletons`` and ``compute_degrees`` were both ``False`` in :func:`create`).
+    singleton_indices: `array or None`
+        Indices of any singleton observations. This will be ``None`` if there was no need to identify singletons.
     degrees : `int or None`
         Exact or approximate number of degrees of freedom used by the fixed effects computed according to
         ``degrees_method`` in :func:`create`. This will be ``None`` if ``compute_degrees`` was ``False`` in
@@ -44,6 +46,7 @@ class Algorithm(abc.ABC):
     observations: int
     dimensions: int
     singletons: Optional[int]
+    singleton_indices: Optional[Array]
     degrees: Optional[int]
     _lb: int = 1
     _ub: Optional[int] = None
@@ -75,12 +78,12 @@ class Algorithm(abc.ABC):
         if any(g.group_count < 2 for g in self._groups_list[1:]):
             raise ValueError("All fixed effects after the first one should have more than one level.")
 
-        # count and drop singletons
-        self._singleton_indices = self.singletons = None
+        # count and drop singletons (have two versions of singleton indices for backwards compatibility)
+        self._singleton_indices = self.singleton_indices = self.singletons = None
         if drop_singletons:
-            self._singleton_indices = identify_singletons(self._groups_list)
-            self.singletons = int(self._singleton_indices.sum())
-            self._groups_list = [Groups(g.codes[~self._singleton_indices]) for g in self._groups_list]
+            self._singleton_indices = self.singleton_indices = identify_singletons(self._groups_list)
+            self.singletons = int(self.singleton_indices.sum())
+            self._groups_list = [Groups(g.codes[~self.singleton_indices]) for g in self._groups_list]
 
         # count degrees of freedom and singletons as a by-product
         self.degrees = None

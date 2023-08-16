@@ -94,8 +94,8 @@ def problem(request: Any) -> Problem:
 
     # drop any weights associated with singletons
     dropped_weights = weights
-    if weights is not None and algorithm._singleton_indices is not None:
-        dropped_weights = weights[~algorithm._singleton_indices]
+    if weights is not None and algorithm.singleton_indices is not None:
+        dropped_weights = weights[~algorithm.singleton_indices]
 
     # residualize the matrices
     y1, X1 = np.split(algorithm.residualize(np.c_[y, X], weights), [1], axis=1)
