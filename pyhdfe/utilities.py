@@ -90,7 +90,7 @@ class Groups(object):
         return np.add.reduceat(matrix[self.sort_indices], self.reduce_indices)
 
     def mean(self, matrix: Array, weights: Optional[Array] = None) -> Array:
-        """Compute the mean of each group."""
+        """Compute the (potentially weighted) mean of each group."""
         if weights is None:
             return self.sum(matrix) / self.counts[:, None]
         return self.sum(matrix * weights) / self.sum(weights)

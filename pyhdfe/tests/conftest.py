@@ -12,7 +12,7 @@ from ..utilities import Array
 
 
 # define the type of fixed effect problems
-Problem = Tuple[int, int, Array, Array, Array, Array, Array]
+Problem = Tuple[int, int, Array, Array, Array, Array, Array, Array]
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -35,20 +35,19 @@ def get_parameters() -> Iterator[Any]:
                 continue
             if np.prod(scales) * np.prod(levels) < covariates + np.sum(levels):
                 continue
-            for weights in [True, False, "ones"]:
-                yield pytest.param([covariates, scales, levels, singletons, weights], id="-".join([
+            for weighted in [False, True]:
+                yield pytest.param([covariates, scales, levels, singletons, weighted], id="-".join([
                     f"covariates: {covariates}",
                     f"scales: {scales}",
                     f"levels: {levels}",
                     f"singletons: {int(100 * singletons)}%",
-                    f"weights: {weights}"
+                    f"weighted: {weighted}",
                 ]))
 
 
 def simulate_data(
-        covariates: int, scales: Sequence[int], levels: Sequence[int],
-        singletons: float, state: np.random.RandomState,
-        weights: Union[Array, bool, str]) -> Tuple[Array, Array, Array, Union[Array, None]]:
+        state: np.random.RandomState, covariates: int, scales: Sequence[int], levels: Sequence[int], singletons: float,
+        weighted: bool) -> Tuple[Array, Array, Array, Union[Array, None]]:
     """Simulate IDs and data matrices."""
 
     # simulate fixed effects
@@ -76,13 +75,7 @@ def simulate_data(
     error = state.normal(size=(N, 1))
     X = state.normal(size=(N, covariates))
     y = X.sum(axis=1, keepdims=True) + fe.sum(axis=1, keepdims=True) + error
-
-    if weights:
-        weights = state.uniform(size=(N, 1))
-    elif weights == "ones":
-        weights = np.ones((N, 1))
-    else:
-        weights = None
+    weights = state.uniform(size=(N, 1)) if weighted else None
 
     return ids, X, y, weights
 
@@ -90,25 +83,29 @@ def simulate_data(
 @pytest.fixture(scope='session', params=get_parameters())
 def problem(request: Any) -> Problem:
     """Simulate a fixed effect problem against which algorithms can be compared."""
-    covariates, scales, levels, singletons, weights = request.param
 
     # simulate the data
     state = np.random.RandomState(hash(tuple(request.param)) % 2**32)
-    ids, X, y, w = simulate_data(covariates, scales, levels, singletons, state, weights)
+    ids, X, y, weights = simulate_data(state, *request.param)
 
     # count degrees of freedom
     algorithm = create(ids, degrees_method='exact')
     assert algorithm.degrees is not None
 
-    # run a regression
-    y1, X1 = np.split(algorithm.residualize(np.c_[y, X], w), [1], axis=1)
-    if w is None:
-        beta = scipy.linalg.inv(X1.T @ X1) @ X1.T @ y1
-    else:
-        if algorithm._singleton_indices is not None:
-            w2 = w[~algorithm._singleton_indices]
-        y1w = np.sqrt(w2) * y1
-        X1w = np.sqrt(w2) * X1
-        beta = scipy.linalg.inv(X1w.T @ X1w) @ X1w.T @ y1w
+    # drop any weights associated with singletons
+    dropped_weights = weights
+    if weights is not None and algorithm._singleton_indices is not None:
+        dropped_weights = weights[~algorithm._singleton_indices]
 
-    return algorithm.observations, algorithm.degrees, y, X, ids, beta[:X.shape[1]], w
+    # residualize the matrices
+    y1, X1 = np.split(algorithm.residualize(np.c_[y, X], weights), [1], axis=1)
+
+    # optionally weight them
+    if dropped_weights is not None:
+        X1 *= np.sqrt(dropped_weights)
+        y1 *= np.sqrt(dropped_weights)
+
+    # run a regression
+    beta = scipy.linalg.inv(X1.T @ X1) @ X1.T @ y1
+
+    return algorithm.observations, algorithm.degrees, y, X, ids, beta[:X.shape[1]], weights, dropped_weights

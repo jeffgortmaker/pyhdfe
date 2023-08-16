@@ -47,6 +47,7 @@ class Algorithm(abc.ABC):
     degrees: Optional[int]
     _lb: int = 1
     _ub: Optional[int] = None
+    _supports_weights: bool = True
     _groups_list: List[Groups]
     _singleton_indices: Optional[Array]
 
@@ -85,8 +86,6 @@ class Algorithm(abc.ABC):
         self.degrees = None
         if compute_degrees:
             self.degrees, self.singletons = self._compute_degrees(cluster_ids, degrees_method)
-
-        self._supports_weights = False
 
     def _compute_degrees(self, cluster_ids: Optional[Array], degrees_method: Optional[str]) -> Tuple[int, int]:
         """Exactly compute or approximate the degrees of freedom used by the fixed effects. As a by-product, count the
@@ -143,8 +142,8 @@ class Algorithm(abc.ABC):
         .. warning::
 
            This function assumes that all of your data have already been cleaned. For example, it will not drop
-           observations with null values. It will also not do any checks on provided weights, i.e. if they are
-           all larger than 0.
+           observations with null values. It will also not do any checks on provided weights (e.g., if they are all
+           larger than zero).
 
         Parameters
         ----------
@@ -153,16 +152,16 @@ class Algorithm(abc.ABC):
             :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`).
         weights: `array-like, optional`
             Two-dimensional array with weights, which should have a number of rows equal to
-            :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`),
-            and one column.
+            :attr:`Algorithm.observations` (i.e., the number of rows in the ``ids`` passed to :func:`create`), and one
+            column. Currently supported algorithms are ``'within'``, ``'dummy'``, and non-accelerated ``'map'``.
 
         Returns
         -------
         `ndarray`
-            Residuals from a (weighted) regression of each column of ``matrix`` on the fixed effects.
-            This matrix has the same number of columns as ``matrix``. If any singleton observations
-            were dropped when initializing the :class:`Algorithm` (this is the default behavior
-            of :func:`create`), the residualized matrix will have correspondingly fewer rows.
+            Residuals from a (potentially weighted) regression of each column of ``matrix`` on the fixed effects. This
+            matrix has the same number of columns as ``matrix``. If any singleton observations were dropped when
+            initializing the :class:`Algorithm` (this is the default behavior of :func:`create`), the residualized
+            matrix will have correspondingly fewer rows.
 
         Examples
         --------
@@ -178,11 +177,8 @@ class Algorithm(abc.ABC):
             matrix = matrix[~self._singleton_indices]
 
         if weights is not None:
-
             if not self._supports_weights:
-                raise NotImplementedError(
-                    """weights are not supported for algorithms of type `lsmr` and `sw`.
-                    For `map`, only `acceleration = 'none'` is supported.""")
+                raise NotImplementedError("This algorithm does not currently support weights.")
             weights = np.atleast_2d(weights)
             if len(weights.shape) != 2:
                 raise ValueError("weights should be a two-dimensional array.")
@@ -195,7 +191,7 @@ class Algorithm(abc.ABC):
 
     @abc.abstractmethod
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
-        """Residualize a matrix. If weights are provided, residualize by the *weighted* mean."""
+        """Residualize a matrix. If weights are provided, residualize using weighted averages."""
 
 
 class Dummy(Algorithm):
@@ -208,14 +204,11 @@ class Dummy(Algorithm):
             degrees_method: Optional[str]) -> None:
         """Create dummy variables."""
         super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
-        self._supports_weights = True
         self._D = np.hstack([g.dense_dummies(drop_last=i > 0) for i, g in enumerate(self._groups_list)])
 
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
         """Compute residuals from regressions of each matrix column on the dummy variables."""
-        if weights is None:
-            weights = np.ones(self.observations)
-        WD = np.sqrt(weights) * self._D
+        WD = self._D if weights is None else np.sqrt(weights) * self._D
         return matrix - WD @ scipy.linalg.inv(WD.T @ WD) @ WD.T @ matrix
 
 
@@ -229,7 +222,6 @@ class Within(Algorithm):
             degrees_method: Optional[str]) -> None:
         """Create dummy variables."""
         super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
-        self._supports_weights = True
 
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
         """De-mean a matrix within groups."""
@@ -241,6 +233,7 @@ class Within(Algorithm):
 class SW(Algorithm):
     """Two-dimensional fixed effect absorption with the algorithm of Somaini and Wolak (2016)."""
 
+    _supports_weights = False
     _lb = _ub = 2
     _D: scipy.sparse.csr_matrix
     _H: scipy.sparse.csc_matrix
@@ -274,9 +267,9 @@ class SW(Algorithm):
         # compute the remaining component
         self._B = -self._DD_inv @ self._DH @ self._C
 
-    def _residualize_matrix(self, matrix: Array, weights=None) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
         """Complete the algorithm."""
-
+        assert weights is None
         matrix = scipy.sparse.csr_matrix(matrix)
         Dx = self._D.T @ matrix
         Hx = self._H.T @ matrix
@@ -350,11 +343,10 @@ class MAP(FixedPoint):
             raise ValueError("acceleration_tol should be a nonnegative float.")
         if self._converged is None:
             raise ValueError("There should be a convergence criteria.")
+        self._supports_weights = acceleration == 'none'
         self._transform = transform
         self._acceleration = acceleration
         self._acceleration_tol = acceleration_tol
-        if acceleration == "none":
-            self._supports_weights = True
 
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
         """Residualize a matrix with fixed point iteration."""
@@ -384,7 +376,6 @@ class MAP(FixedPoint):
         of squared residuals relative to the sum of squared vector values is greater than the acceleration tolerance and
         when the t value is greater than its expected upper bound of 0.5.
         """
-
         iterations = 0
         while True:
             last_matrix = matrix
@@ -484,6 +475,7 @@ class LSMR(FixedPoint):
     convergence criteria, and optional termination conditions.
     """
 
+    _supports_weights = False
     _residual_tol: float
     _condition_limit: float
     _A: scipy.sparse.linalg.LinearOperator
@@ -515,8 +507,9 @@ class LSMR(FixedPoint):
         r = b / s if abs(b) > abs(a) else a / c
         return c, s, r
 
-    def _residualize_matrix(self, matrix: Array, weights=None) -> Array:
+    def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
         """Compute fitted values for each column with LSMR and form residuals."""
+        assert weights is None
 
         # collect dimensions
         matrix_transpose = matrix.T
