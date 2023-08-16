@@ -33,17 +33,11 @@ from .conftest import Problem
     pytest.param('map', {'acceleration': 'gk', 'acceleration_tol': np.inf}, id="MAP-GK-simple"),
     pytest.param('map', {'transform': 'cimmino', 'acceleration': 'cg', 'acceleration_tol': np.inf}, id="MAP-CG-simple"),
 ])
-@pytest.mark.parametrize('standardize_weights', [
-    pytest.param(True, id="standardize weights"),
-    pytest.param(False, id="raw weights")
-])
-def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method: str, options: dict,
-                    standardize_weights: bool) -> None:
+def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method: str, options: dict) -> None:
     """Test that algorithms give correct estimates."""
     _, _, y, X, ids, beta, weights = problem
     try:
-        algorithm = create(ids, drop_singletons=drop_singletons, residualize_method=residualize_method,
-                           options=options, standardize_weights=standardize_weights)
+        algorithm = create(ids, drop_singletons=drop_singletons, residualize_method=residualize_method, options=options)
     except ValueError as exception:
         if "fixed effects supported" in str(exception):
             return pytest.skip(f"This algorithm does not support {ids.shape[1]}-dimensional fixed effects.")

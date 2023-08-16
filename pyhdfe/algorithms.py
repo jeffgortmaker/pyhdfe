@@ -52,7 +52,7 @@ class Algorithm(abc.ABC):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
+            degrees_method: Optional[str]) -> None:
         """Validate IDs, optionally drop singletons, initialize group information, and compute counts."""
 
         # validate fixed effect IDs
@@ -87,9 +87,6 @@ class Algorithm(abc.ABC):
             self.degrees, self.singletons = self._compute_degrees(cluster_ids, degrees_method)
 
         self._supports_weights = False
-        self._standardize_weights = False
-        if standardize_weights:
-            self._standardize_weights = True
 
     def _compute_degrees(self, cluster_ids: Optional[Array], degrees_method: Optional[str]) -> Tuple[int, int]:
         """Exactly compute or approximate the degrees of freedom used by the fixed effects. As a by-product, count the
@@ -193,8 +190,6 @@ class Algorithm(abc.ABC):
                 raise ValueError("weights should have the same number of rows as fixed effect IDs.")
             if self._singleton_indices is not None:
                 weights = weights[~self._singleton_indices]
-            if self._standardize_weights:
-                weights /= np.sum(weights)
 
         return self._residualize_matrix(matrix, weights)
 
@@ -210,9 +205,9 @@ class Dummy(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
+            degrees_method: Optional[str]) -> None:
         """Create dummy variables."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
         self._supports_weights = True
         self._D = np.hstack([g.dense_dummies(drop_last=i > 0) for i, g in enumerate(self._groups_list)])
 
@@ -231,9 +226,9 @@ class Within(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
+            degrees_method: Optional[str]) -> None:
         """Create dummy variables."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
         self._supports_weights = True
 
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array]) -> Array:
@@ -256,9 +251,9 @@ class SW(Algorithm):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool]) -> None:
+            degrees_method: Optional[str]) -> None:
         """Construct algorithm components."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
 
         # construct sparse matrices
         assert len(self._groups_list) == 2
@@ -299,10 +294,10 @@ class FixedPoint(Algorithm, abc.ABC):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool],
-            iteration_limit: int, tol: float, converged: Optional[Callable[[Array, Array], bool]]) -> None:
+            degrees_method: Optional[str], iteration_limit: int, tol: float,
+            converged: Optional[Callable[[Array, Array], bool]]) -> None:
         """Validate fixed point options."""
-        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, standardize_weights)
+        super().__init__(ids, cluster_ids, drop_singletons, compute_degrees, degrees_method)
         if not isinstance(iteration_limit, int) or iteration_limit <= 0:
             raise ValueError("iteration_limit should be a positive integer.")
         if not isinstance(tol, (int, float)) or tol < 0:
@@ -336,13 +331,12 @@ class MAP(FixedPoint):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool], iteration_limit: int, tol: float,
+            degrees_method: Optional[str], iteration_limit: int, tol: float,
             converged: Optional[Callable[[Array, Array], bool]], transform: str, acceleration: str,
             acceleration_tol: float) -> None:
         """Validate transform and acceleration options."""
         super().__init__(
-            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method,
-            standardize_weights, iteration_limit, tol, converged
+            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, iteration_limit, tol, converged
         )
         transforms = {'kaczmarz', 'symmetric', 'cimmino'}
         accelerations = {'none', 'gk', 'cg'}
@@ -496,12 +490,11 @@ class LSMR(FixedPoint):
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
-            degrees_method: Optional[str], standardize_weights: Optional[bool], iteration_limit: int, tol: float,
+            degrees_method: Optional[str], iteration_limit: int, tol: float,
             converged: Optional[Callable[[Array, Array], bool]], residual_tol: float, condition_limit: float) -> None:
         """Validate tolerances and create a sparse matrix of dummy variables."""
         super().__init__(
-            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method,
-            standardize_weights, iteration_limit, tol, converged
+            ids, cluster_ids, drop_singletons, compute_degrees, degrees_method, iteration_limit, tol, converged
         )
         if not isinstance(residual_tol, (int, float)) or residual_tol < 0:
             raise ValueError("residual_tol should be a nonnegative float.")
