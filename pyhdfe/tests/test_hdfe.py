@@ -61,7 +61,10 @@ def test_algorithms(problem: Problem, drop_singletons: bool, residualize_method:
 
     # run the regression
     beta1 = scipy.linalg.inv(X1.T @ X1) @ X1.T @ y1
-    np.testing.assert_allclose(beta, beta1, atol=1e-12, rtol=1e-12, verbose=True)
+
+    # LSMR requires a slightly looser tolerance
+    tol = 1e-11 if residualize_method == 'lsmr' else 1e-12
+    np.testing.assert_allclose(beta, beta1, atol=tol, rtol=tol, verbose=True)
 
 
 @pytest.mark.usefixtures('problem')
