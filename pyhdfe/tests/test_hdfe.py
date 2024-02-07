@@ -1,5 +1,6 @@
 """Primary tests."""
 
+import functools
 import operator
 
 import pytest
@@ -116,3 +117,50 @@ def test_clusters(problem: Problem, degrees_method: str) -> None:
     _, _, _, _, ids, _, _, _ = problem
     algorithm = create(ids, cluster_ids=ids, degrees_method=degrees_method)
     np.testing.assert_array_equal(algorithm.degrees, 0, verbose=True)
+
+
+@pytest.mark.usefixtures('problem')
+@pytest.mark.parametrize(['residualize_method', 'options'], [
+    pytest.param('lsmr', {}, id="LSMR"),
+    pytest.param('map', {'transform': 'kaczmarz', 'acceleration': 'none'}, id="MAP-K"),
+    pytest.param('map', {'transform': 'kaczmarz', 'acceleration': 'gk'}, id="MAP-K-GK"),
+    pytest.param('map', {'transform': 'symmetric', 'acceleration': 'none'}, id="MAP-SK"),
+    pytest.param('map', {'transform': 'symmetric', 'acceleration': 'gk'}, id="MAP-SK-GK"),
+    pytest.param('map', {'transform': 'symmetric', 'acceleration': 'cg'}, id="MAP-SK-CG"),
+    pytest.param('map', {'transform': 'cimmino', 'acceleration': 'none'}, id="MAP-C"),
+    pytest.param('map', {'transform': 'cimmino', 'acceleration': 'gk'}, id="MAP-C-GK"),
+    pytest.param('map', {'transform': 'cimmino', 'acceleration': 'cg'}, id="MAP-C-CG"),
+])
+@pytest.mark.parametrize('errors', [
+    pytest.param('raise', id="raise"),
+    pytest.param('warn', id="warn"),
+])
+def test_convergence_errors(problem: Problem, residualize_method: str, options: dict, errors: str) -> None:
+    """Test that convergence errors lead to either an exception or a warning, depending on the configuration."""
+    _, _, y, X, ids, beta, weights, dropped_weights = problem
+
+    # create the algorithm with an iteration limit of one so that convergence failures are guaranteed
+    options = options.copy()
+    options['iteration_limit'] = 1
+    try:
+        algorithm = create(ids, residualize_method=residualize_method, options=options)
+    except ValueError as exception:
+        if "fixed effects supported" in str(exception):
+            return pytest.skip(f"This algorithm does not support {ids.shape[1]}-dimensional fixed effects.")
+        raise
+
+    # expect an exception or a warning
+    if errors == 'raise':
+        expect = functools.partial(pytest.raises, RuntimeError)
+    else:
+        assert errors == 'warn'
+        expect = functools.partial(pytest.warns, RuntimeWarning)
+
+    # residualize the matrices
+    with expect(match="Failed to converge"):
+        try:
+            algorithm.residualize(np.c_[y, X], weights, errors)
+        except NotImplementedError as exception:
+            if "does not currently support weights" in str(exception):
+                return pytest.skip("This algorithm does not currently support weights.")
+            raise
