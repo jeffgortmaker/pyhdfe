@@ -34,7 +34,7 @@ Development of the package has been guided by code made publicly available by ma
 Installation
 ------------
 
-The PyHDFE package has been tested on `Python <https://www.python.org/downloads/>`_ versions 3.6 through 3.9. The `SciPy instructions <https://scipy.org/install/>`_ for installing related packages is a good guide for how to install a scientific Python environment. A good choice is the `Anaconda Distribution <https://www.anaconda.com/download>`_, since, along with many other packages that are useful for scientific computing, it comes packaged with PyHDFE's only required dependencies: `NumPy <https://numpy.org/>`_ and `SciPy <https://scipy.org/>`_.
+The PyHDFE package has been tested on `Python <https://www.python.org/downloads/>`_ versions 3.7 through 3.9. The `SciPy instructions <https://scipy.org/install/>`_ for installing related packages is a good guide for how to install a scientific Python environment. A good choice is the `Anaconda Distribution <https://www.anaconda.com/download>`_, since, along with many other packages that are useful for scientific computing, it comes packaged with PyHDFE's only required dependencies: `NumPy <https://numpy.org/>`_ and `SciPy <https://scipy.org/>`_.
 
 You can install the current release of PyHDFE with `pip <https://pip.pypa.io/en/latest/>`_::
 
