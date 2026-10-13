@@ -8,10 +8,17 @@ import warnings
 
 import numpy as np
 import scipy.linalg
-import scipy.sparse
 import scipy.sparse.linalg
 
 from .utilities import Array, Groups, identify_singletons, max_norm_convergence
+
+try:
+    from scipy.sparse import csc_array, csr_array, diags_array
+except ImportError:
+    import scipy.sparse
+    csr_array = scipy.sparse.csr_matrix
+    csc_array = scipy.sparse.csc_matrix
+    diags_array = scipy.sparse.diags
 
 
 class Algorithm(abc.ABC):
@@ -247,12 +254,12 @@ class SW(Algorithm):
 
     _supports_weights = False
     _lb = _ub = 2
-    _D: scipy.sparse.csr_matrix
-    _H: scipy.sparse.csc_matrix
-    _DH: scipy.sparse.csr_matrix
-    _DD_inv: scipy.sparse.csr_matrix
-    _C: scipy.sparse.csr_matrix
-    _B: scipy.sparse.csr_matrix
+    _D: csr_array
+    _H: csc_array
+    _DH: csr_array
+    _DD_inv: csr_array
+    _C: csr_array
+    _B: csr_array
 
     def __init__(
             self, ids: Array, cluster_ids: Optional[Array], drop_singletons: bool, compute_degrees: bool,
@@ -267,12 +274,12 @@ class SW(Algorithm):
 
         # compute the straightforward components of the annihilator matrix
         self._DH = self._D.T @ self._H
-        self._DD_inv = scipy.sparse.diags(1 / (self._D.T @ self._D).diagonal())
+        self._DD_inv = diags_array(1 / (self._D.T @ self._D).diagonal())
 
         # attempt to compute the only non-diagonal inverse
         C_inv = self._H.T @ self._H - self._DH.T @ self._DD_inv @ self._DH
         try:
-            self._C = scipy.sparse.csr_matrix(scipy.linalg.inv(C_inv.toarray()))
+            self._C = csr_array(scipy.linalg.inv(C_inv.toarray()))
         except scipy.linalg.LinAlgError:
             raise RuntimeError("Failed to invert the C matrix in the Somaini-Wolak algorithm.")
 
@@ -282,7 +289,7 @@ class SW(Algorithm):
     def _residualize_matrix(self, matrix: Array, weights: Optional[Array], errors: str) -> Array:
         """Complete the algorithm."""
         assert weights is None
-        matrix = scipy.sparse.csr_matrix(matrix)
+        matrix = csr_array(matrix)
         Dx = self._D.T @ matrix
         Hx = self._H.T @ matrix
         ADx = self._DD_inv @ Dx + self._DD_inv @ (self._DH @ (self._C @ (self._DH.T @ (self._DD_inv @ Dx))))

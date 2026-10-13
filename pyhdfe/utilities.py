@@ -5,6 +5,11 @@ from typing import Any, Sequence, Optional
 import numpy as np
 import scipy.sparse
 
+try:
+    from scipy.sparse import coo_array
+except ImportError:
+    coo_array = scipy.sparse.coo_matrix
+
 
 # define common types
 Array = Any
@@ -51,7 +56,7 @@ class Groups(object):
         """Compute the number of connected components in the bipartite graph between these and another set of groups."""
         assert self.total_count == other.total_count
         combined_group_count = self.group_count + other.group_count
-        graph = scipy.sparse.coo_matrix(
+        graph = coo_array(
             (np.ones(self.total_count), (self.codes, self.group_count + other.codes)),
             (combined_group_count, combined_group_count)
         )
@@ -64,7 +69,7 @@ class Groups(object):
             columns -= 1
         return np.eye(self.group_count, columns).take(self.codes, axis=0)
 
-    def sparse_dummies(self, drop_last: bool = False) -> scipy.sparse.coo_matrix:
+    def sparse_dummies(self, drop_last: bool = False) -> coo_array:
         """Create a sparse matrix of dummy variables, optionally without the first column."""
         rows = self.total_count
         columns = self.group_count
@@ -75,7 +80,7 @@ class Groups(object):
             keep = column_indices < columns
             row_indices = row_indices[keep]
             column_indices = column_indices[keep]
-        return scipy.sparse.coo_matrix((np.ones_like(column_indices), (row_indices, column_indices)), (rows, columns))
+        return coo_array((np.ones_like(column_indices), (row_indices, column_indices)), (rows, columns))
 
     def min(self, matrix: Array) -> Array:
         """Compute the minimum of each group."""
