@@ -1,0 +1,26 @@
+name: tox
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container: python:${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {python: "3.6", env: tests}
+          - {python: "3.7", env: tests-py37}
+          - {python: "3.8", env: tests-py38}
+          - {python: "3.9", env: tests-py39}
+          - {python: "3.10", env: tests-py310}
+          - {python: "3.11", env: tests-py311}
+          - {python: "3.12", env: tests-py312}
+          - {python: "3.13", env: tests-py313}
+          - {python: "3.14", env: tests-py314}
+          - {python: "3.15", env: tests-py315}
+    steps:
+      - uses: actions/checkout@v7
+      - run: pip install tox
+      - run: tox -e ${{ matrix.env }}
